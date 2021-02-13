@@ -166,7 +166,11 @@ def commands_handler(message):
 
 @bot.message_handler(func=lambda msg: True ,content_types= ['text'])
 def message_handler(message):
-    if message.text.split()[0] == 'بحث':
+    #الرجاء عدم حذف حقوق مطور السور
+    if message.text.split()[0] in ['سورس','السورس']:
+        bot.send_message(chat_id=message.chat.id, reply_to_message_id=message.id,
+                        text="https://github.com/Awiteb/YouTube-Bot\n\ndev:@AWWWZ  cha:@Awiteb_source ⌨️", parse_mode="HTML")
+    elif message.text.split()[0] == 'بحث':
         sureSearch(message_id=message.id, chat_id=message.chat.id, user_id=message.from_user.id, textToSearch=message.text.replace('بحث ',''))
     elif message.text.split()[0] == 'تنزيل':
         checkLink(chat_id=message.chat.id, message_id=message.id, user_id=message.from_user.id, link=message.text.split()[0])
