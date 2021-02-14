@@ -51,12 +51,28 @@ try:
 except:
     print(f"Admin id is {dev_id} if id is true send a message to the bot and then restart it.")
     sys.exit(1)
-start_and_help_msg = """
-للتحميل ادخل رابط يوتيوب 
-ويمكنك ادخال اسم الاغنية
-وبالمجموعة تكتب 'بحث اسم الاغنية'
-ملحوظة:
-يجب رفع البوت مشرف بالمجموعة لاستعماله
+
+private_help_msg = f"""
+🔘اهلا طريقة استعمال البوت بالخاص هي:
+🔘يمكنك التنزيل عبر (البحث، والرابط).
+🔘يمكنك البحث في (اليوتيوب).
+🔘والتنزيل عبر رابط من (اليوتيوب).
+🔘طريقة البحث هي كتابة ماتريد البحث عنه.
+🔘وطريقة التنزيل عبر ارسال الرابط الذي تود تنزيله.
+
+🔴ملحوظة:
+🔘 لطريقة التنزيل بالمجموعة ادخل المجموعة واكتب /help@{botUser}
+"""
+
+public_help_msg = f"""
+🔘اهلا طريقة استعمال البوت بالمجموعة هي:
+🔘يمكنك التنزيل عبر (البحث، والرابط).
+🔘يمكنك البحث في (اليوتيوب).
+🔘والتنزيل عبر رابط من (اليوتيوب).
+🔘طريقة البحث: بحث 'ماتريد البحث عنه'.
+🔘وطريقة التنزيل عبر رابط : تنزيل 'الرابط'.
+    ▫️مثال التنزيل: تنزيل https://www.youtube.com/watch?v=aMq_W0AYhDk
+    ▫️مثال البحث: بحث لمياء المالكي
 """
 
 def send_message_to_admins(text):
@@ -173,11 +189,18 @@ def commands_handler(message):
                         text=mainChaSubscribMsg, 
                         reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text='𝕔𝕙𝕒.', url=f"https://telegram.me/{bot.get_chat(mainCha).username}")))
     else:
-        bot.send_message(chat_id=message.chat.id,
-                        text=start_and_help_msg,
-                        reply_to_message_id= message.id,
-                        reply_markup=dev_addBot(),
-                        parse_mode='HTML')
+        if message.chat.type == 'private':
+            bot.send_message(chat_id=message.chat.id,
+                            text=private_help_msg,
+                            reply_to_message_id= message.id,
+                            reply_markup=dev_addBot(),
+                            parse_mode='HTML')
+        else:
+            bot.send_message(chat_id=message.chat.id,
+                            text=public_help_msg,
+                            reply_to_message_id= message.id,
+                            reply_markup=dev_addBot(),
+                            parse_mode='HTML', disable_web_page_preview=True)
 
 
 @bot.message_handler(func=lambda msg: True ,content_types= ['text'])
