@@ -201,7 +201,7 @@ def callback_handler(call):
                 bot.edit_message_text(text="تم الغاء البحث✔️",chat_id=call.message.chat.id,
                                     message_id=call.message.message_id, reply_markup=dev_cha())
         elif interface == 'S': #Search
-            if button == 'y':
+            if button == 'Y':
                 bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
                 downloadMethod(chat_id=call.message.chat.id, user_id=request_interface,
                                     videoID=callbackData[3])
