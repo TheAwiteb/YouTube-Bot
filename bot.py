@@ -22,7 +22,6 @@ while True:
                 mainCha = data['mainCha']
                 break
         except Exception as e:
-            print(e)
             print("Sorry, the data syntax in config.json has a problem, let's get back Reframe it.!,")
             os.remove("./config.json")
             continue
@@ -31,8 +30,6 @@ while True:
             print("Done make new json file name 'config.json', The bot token and admin id, will be saved in this file.")
             dev_id = int(input("Enter dev id: "))
             token = input("Enter bot token: ")
-            mainCha = input("Enter main Cha (just username don't add @):")
-            mainCha ="https://t.me/"+mainCha
             amount = int(input("How many admin you want add: "))
             admins = []
             admins.append(dev_id)
@@ -65,6 +62,20 @@ start_and_help_msg = """
 def send_message_to_admins(text):
     for id_ in admins:
         bot.send_message(id_,f"📢\n🔴هاذي رسالة موجهة للادمنية فقط🔴\n{text}")
+
+mainChaSubscribMsg = f"""
+عليك الاشتراك بقناة البوت الاساسية لتتمكن من استخدامه
+
+- @{bot.get_chat(mainCha).username}
+
+‼️ اشترك ثم ارسل /start
+"""
+def mainCha_subscribed(user_id):
+    status = bot.get_chat_member(mainCha, user_id).status
+    if status == 'creator' or status == 'administrator' or status == 'member':
+        return True
+    else:
+        return False
 
 def youTubeSearch(user_id, text):
     markup = types.InlineKeyboardMarkup()
@@ -133,7 +144,7 @@ def dev_addBot():
 def dev_cha():
     markup = types.InlineKeyboardMarkup()
     devButton = types.InlineKeyboardButton(text='𝕕𝕖𝕧.', url=dev_url)
-    chaButton = types.InlineKeyboardButton(text='𝕔𝕙𝕒.', url=mainCha)
+    chaButton = types.InlineKeyboardButton(text='𝕔𝕙𝕒.', url=f"https://telegram.me/{bot.get_chat(mainCha).username}")
     markup.add(devButton)
     markup.add(chaButton)
     return markup
@@ -157,126 +168,140 @@ def make_action(chat_id, action, timeout):
 
 @bot.message_handler(commands=['start', 'help'])
 def commands_handler(message):
-    bot.send_message(chat_id=message.chat.id,
-                    text=start_and_help_msg,
-                    reply_to_message_id= message.id,
-                    reply_markup=dev_addBot(),
-                    parse_mode='HTML')
+    if not mainCha_subscribed(message.from_user.id):
+        bot.send_message(chat_id=message.chat.id, reply_to_message_id=message.id,
+                        text=mainChaSubscribMsg, 
+                        reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text='𝕔𝕙𝕒.', url=f"https://telegram.me/{bot.get_chat(mainCha).username}")))
+    else:
+        bot.send_message(chat_id=message.chat.id,
+                        text=start_and_help_msg,
+                        reply_to_message_id= message.id,
+                        reply_markup=dev_addBot(),
+                        parse_mode='HTML')
 
 
 @bot.message_handler(func=lambda msg: True ,content_types= ['text'])
 def message_handler(message):
-    #الرجاء عدم حذف حقوق مطور السور
-    if message.text.split()[0] in ['سورس','السورس']:
+    if not mainCha_subscribed(message.from_user.id):
         bot.send_message(chat_id=message.chat.id, reply_to_message_id=message.id,
-                        text="https://github.com/Awiteb/YouTube-Bot\n\ndev:@AWWWZ  cha:@Awiteb_source ⌨️", parse_mode="HTML")
-    elif message.text.split()[0] == 'بحث':
-        sureSearch(message_id=message.id, chat_id=message.chat.id, user_id=message.from_user.id, textToSearch=message.text.replace('بحث ',''))
-    elif message.text.split()[0] == 'تنزيل':
-        checkLink(chat_id=message.chat.id, message_id=message.id, user_id=message.from_user.id, link=message.text.split()[0])
+                        text=mainChaSubscribMsg, 
+                        reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text='𝕔𝕙𝕒.', url=f"https://telegram.me/{bot.get_chat(mainCha).username}")))
     else:
-        if message.chat.type == 'private':
-            if 'youtube' in message.text.split()[0] or 'youtu' in message.text.split()[0]:
-                checkLink(chat_id=message.chat.id, message_id=message.id, user_id=message.from_user.id, link=message.text.split()[0])
-            else:
-                sureSearch(message_id=message.id, chat_id=message.chat.id, user_id=message.from_user.id, textToSearch=message.text)
+        #الرجاء عدم حذف حقوق مطور السور
+        if message.text.split()[0] in ['سورس','السورس']:
+            bot.send_message(chat_id=message.chat.id, reply_to_message_id=message.id,
+                            text="https://github.com/Awiteb/YouTube-Bot\n\ndev:@AWWWZ  cha:@Awiteb_source ⌨️", parse_mode="HTML")
+        elif message.text.split()[0] == 'بحث':
+            sureSearch(message_id=message.id, chat_id=message.chat.id, user_id=message.from_user.id, textToSearch=message.text.replace('بحث ',''))
+        elif message.text.split()[0] == 'تنزيل':
+            checkLink(chat_id=message.chat.id, message_id=message.id, user_id=message.from_user.id, link=message.text.split()[0])
         else:
-            pass
+            if message.chat.type == 'private':
+                if 'youtube' in message.text.split()[0] or 'youtu' in message.text.split()[0]:
+                    checkLink(chat_id=message.chat.id, message_id=message.id, user_id=message.from_user.id, link=message.text.split()[0])
+                else:
+                    sureSearch(message_id=message.id, chat_id=message.chat.id, user_id=message.from_user.id, textToSearch=message.text)
+            else:
+                pass
 
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_handler(call):
-    callbackData = str(call.data).split()
-    print(f"call back ->{callbackData}\nLen ->{len(call.data)}")
-    request_interface = int(callbackData[2])
-    button = callbackData[1]
-    interface = callbackData[0]
-    if request_interface == call.from_user.id:
-        if interface == 'SS': #SureSearch
-            textToSearch = call.message.text.replace('اضغط بحث للبحث عن:\n⏺:', '').strip()
-            if button == 'Yes':
-                search(chat_id=call.message.chat.id, user_id=request_interface,
-                                    textToSearch=textToSearch,message_id=call.message.message_id,reply_markup= youTubeSearch)
-            elif button == 'No':
-                bot.edit_message_text(text="تم الغاء البحث✔️",chat_id=call.message.chat.id,
-                                    message_id=call.message.message_id, reply_markup=dev_cha())
-        elif interface == 'S': #Search
-            if button == 'Y':
-                bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
-                downloadMethod(chat_id=call.message.chat.id, user_id=request_interface,
-                                    videoID=callbackData[3])
-            elif button == 'cancel':
-                bot.edit_message_text(text="تم الغاء البحث ❗️", message_id=call.message.message_id, chat_id=call.message.chat.id,)
-        elif interface == 'DM': #DownloadMethod
-            if button == 'cancel':
-                bot.edit_message_media(chat_id=call.message.chat.id, message_id=call.message.message_id
-                    ,media=types.InputMediaPhoto(call.message.photo[0].file_id),
-                    reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(
-                    text='🛑 تم الغاء التنزيل', callback_data=f"audio cancel {request_interface}")))
-            else:
-                bot.edit_message_media(chat_id=call.message.chat.id, message_id=call.message.message_id
-                                        ,media=types.InputMediaPhoto(call.message.photo[0].file_id),
-                                        reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(
-                                            text="جاري التنزيل 🔄",callback_data=f"audio Dling {request_interface}")))
-                                                                            #Dling = Downloading
-                try:
-                    yt = YouTube(f"https://www.youtube.com/watch?v={callbackData[3]}")
-                    title = yt.title
-                    channel = yt.author
-                    filename = randomStr(amount=9)
-                    yt.streams.filter(only_audio=True).first().download(filename=f"{filename}")
-                    with open(f"{filename}.mp4",mode="rb") as f:  
-                        if button == 'F': #file
-                            Thread(target=make_action, args=(call.message.chat.id, "upload_document", 5)).start()
-                            bot.send_audio(chat_id=call.message.chat.id,audio=f.read(),
-                                        caption=f'<a href="tg://user?id={botID}">{botName}🎧</a>', parse_mode="HTML",
-                                        performer=channel,title=title, thumb=requests.get(f"https://api.telegram.org/file/bot{token}/{bot.get_file(call.message.photo[0].file_id).file_path}").content)
-                        elif button == 'V': #Voise
-                            Thread(target=make_action, args=(call.message.chat.id, "upload_video_note", 5)).start()
-                            bot.send_voice(chat_id=call.message.chat.id, voice=f.read(),
-                                            caption=f'<a href="tg://user?id={botID}">{title}</a>', parse_mode="HTML")
-                except Exception as e:
-                    print(e)
-                    if str(e) == "A request to the Telegram API was unsuccessful. Error code: 413. Description: Request Entity Too Large":
-                        downloadErrorMsg = "عذرا لقد تجاوز حجم الملف 50 MG❗️"
-                    else:
-                        downloadErrorMsg = 'مشكلة بالتنزيل 🛑'
+    if not mainCha_subscribed(call.from_user.id):
+        bot.send_message(chat_id=call.message.chat.id, reply_to_message_id=call.id,
+                        text=mainChaSubscribMsg, 
+                        reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text='𝕔𝕙𝕒.', url=f"https://telegram.me/{bot.get_chat(mainCha).username}")))
+    else:
+        callbackData = str(call.data).split()
+        print(f"call back ->{callbackData}\nLen ->{len(call.data)}")
+        request_interface = int(callbackData[2])
+        button = callbackData[1]
+        interface = callbackData[0]
+        if request_interface == call.from_user.id:
+            if interface == 'SS': #SureSearch
+                textToSearch = call.message.text.replace('اضغط بحث للبحث عن:\n⏺:', '').strip()
+                if button == 'Yes':
+                    search(chat_id=call.message.chat.id, user_id=request_interface,
+                                        textToSearch=textToSearch,message_id=call.message.message_id,reply_markup= youTubeSearch)
+                elif button == 'No':
+                    bot.edit_message_text(text="تم الغاء البحث✔️",chat_id=call.message.chat.id,
+                                        message_id=call.message.message_id, reply_markup=dev_cha())
+            elif interface == 'S': #Search
+                if button == 'Y':
+                    bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
+                    downloadMethod(chat_id=call.message.chat.id, user_id=request_interface,
+                                        videoID=callbackData[3])
+                elif button == 'cancel':
+                    bot.edit_message_text(text="تم الغاء البحث ❗️", message_id=call.message.message_id, chat_id=call.message.chat.id,)
+            elif interface == 'DM': #DownloadMethod
+                if button == 'cancel':
                     bot.edit_message_media(chat_id=call.message.chat.id, message_id=call.message.message_id
-                                    ,media=types.InputMediaPhoto(call.message.photo[0].file_id),
-                                    reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(
-                                        text=downloadErrorMsg, callback_data=f"audio dl-problem {request_interface}")))
-                                                                        #dl-problem = Download problem 
+                        ,media=types.InputMediaPhoto(call.message.photo[0].file_id),
+                        reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(
+                        text='🛑 تم الغاء التنزيل', callback_data=f"audio cancel {request_interface}")))
                 else:
                     bot.edit_message_media(chat_id=call.message.chat.id, message_id=call.message.message_id
-                                    ,media=types.InputMediaPhoto(call.message.photo[0].file_id),
-                                    reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(
-                                        text="تم التنزيل ✅",callback_data=f"audio dld {request_interface}")))
-                                                                    #dld = Downloaded
-                try:
-                    os.remove(f"{filename}.mp4")
-                except:
-                    pass
-        elif interface == 'audio':
-            if button == 'Dling':
-                bot.answer_callback_query(callback_query_id=call.id,
-                            show_alert=True,
-                            text=f"جاري تنزيل المقطع الصوتي 🔘")
-            elif button == 'dld':
-                bot.answer_callback_query(callback_query_id=call.id,
-                            show_alert=True,
-                            text=f"تم التنزيل بنجاح 🔘")
-            elif button == 'dl-problem':
-                bot.answer_callback_query(callback_query_id=call.id,
-                            show_alert=True,
-                            text='🛑عذرا توجد مشكلة بالتنزيل')
-            elif button == 'cancel':
-                bot.answer_callback_query(callback_query_id=call.id,
-                            show_alert=True,
-                            text='🔘 تم الالغاء بنجاح')
-    else:
-        bot.answer_callback_query(callback_query_id=call.id,
-                            show_alert=True,
-                            text=f"عذرا القائمة ليست لك!🚫")
+                                            ,media=types.InputMediaPhoto(call.message.photo[0].file_id),
+                                            reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(
+                                                text="جاري التنزيل 🔄",callback_data=f"audio Dling {request_interface}")))
+                                                                                #Dling = Downloading
+                    try:
+                        yt = YouTube(f"https://www.youtube.com/watch?v={callbackData[3]}")
+                        title = yt.title
+                        channel = yt.author
+                        filename = randomStr(amount=9)
+                        yt.streams.filter(only_audio=True).first().download(filename=f"{filename}")
+                        with open(f"{filename}.mp4",mode="rb") as f:  
+                            if button == 'F': #file
+                                Thread(target=make_action, args=(call.message.chat.id, "upload_document", 5)).start()
+                                bot.send_audio(chat_id=call.message.chat.id,audio=f.read(),
+                                            caption=f'<a href="tg://user?id={botID}">{botName}🎧</a>', parse_mode="HTML",
+                                            performer=channel,title=title, thumb=requests.get(f"https://api.telegram.org/file/bot{token}/{bot.get_file(call.message.photo[0].file_id).file_path}").content)
+                            elif button == 'V': #Voise
+                                Thread(target=make_action, args=(call.message.chat.id, "upload_video_note", 5)).start()
+                                bot.send_voice(chat_id=call.message.chat.id, voice=f.read(),
+                                                caption=f'<a href="tg://user?id={botID}">{title}</a>', parse_mode="HTML")
+                    except Exception as e:
+                        if str(e) == "A request to the Telegram API was unsuccessful. Error code: 413. Description: Request Entity Too Large":
+                            downloadErrorMsg = "عذرا لقد تجاوز حجم الملف 50 MG❗️"
+                        else:
+                            downloadErrorMsg = 'مشكلة بالتنزيل 🛑'
+                        bot.edit_message_media(chat_id=call.message.chat.id, message_id=call.message.message_id
+                                        ,media=types.InputMediaPhoto(call.message.photo[0].file_id),
+                                        reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(
+                                            text=downloadErrorMsg, callback_data=f"audio dl-problem {request_interface}")))
+                                                                            #dl-problem = Download problem 
+                    else:
+                        bot.edit_message_media(chat_id=call.message.chat.id, message_id=call.message.message_id
+                                        ,media=types.InputMediaPhoto(call.message.photo[0].file_id),
+                                        reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(
+                                            text="تم التنزيل ✅",callback_data=f"audio dld {request_interface}")))
+                                                                        #dld = Downloaded
+                    try:
+                        os.remove(f"{filename}.mp4")
+                    except:
+                        pass
+            elif interface == 'audio':
+                if button == 'Dling':
+                    bot.answer_callback_query(callback_query_id=call.id,
+                                show_alert=True,
+                                text=f"جاري تنزيل المقطع الصوتي 🔘")
+                elif button == 'dld':
+                    bot.answer_callback_query(callback_query_id=call.id,
+                                show_alert=True,
+                                text=f"تم التنزيل بنجاح 🔘")
+                elif button == 'dl-problem':
+                    bot.answer_callback_query(callback_query_id=call.id,
+                                show_alert=True,
+                                text='🛑عذرا توجد مشكلة بالتنزيل')
+                elif button == 'cancel':
+                    bot.answer_callback_query(callback_query_id=call.id,
+                                show_alert=True,
+                                text='🔘 تم الالغاء بنجاح')
+        else:
+            bot.answer_callback_query(callback_query_id=call.id,
+                                show_alert=True,
+                                text=f"عذرا القائمة ليست لك!🚫")
 
 
 # Run bot
