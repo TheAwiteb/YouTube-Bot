@@ -208,9 +208,17 @@ def message_handler(message):
 @bot.callback_query_handler(func=lambda call: True)
 def callback_handler(call):
     if not mainCha_subscribed(call.from_user.id):
-        bot.send_message(chat_id=call.message.chat.id, reply_to_message_id=call.id,
-                        text=mainChaSubscribMsg, 
-                        reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text='𝕔𝕙𝕒.', url=f"https://telegram.me/{bot.get_chat(mainCha).username}")))
+        if call.message.photo == None:
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id,
+                            text=mainChaSubscribMsg, 
+                            reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text='𝕔𝕙𝕒.',
+                                                                            url=f"https://telegram.me/{bot.get_chat(mainCha).username}")))
+        else:
+            bot.edit_message_media(chat_id=call.message.chat.id, message_id=call.message.message_id
+                        ,media=types.InputMediaPhoto(call.message.photo[0].file_id),
+                        reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text='⭕️ الرجاء الاشتراك بقناة البوت',
+                                                                            url=f"https://telegram.me/{bot.get_chat(mainCha).username}")))
+
     else:
         callbackData = str(call.data).split()
         print(f"call back ->{callbackData}\nLen ->{len(call.data)}")
