@@ -217,7 +217,7 @@ def message_handler(message):
         elif message.text.split()[0] == 'بحث':
             sureSearch(message_id=message.id, chat_id=message.chat.id, user_id=message.from_user.id, textToSearch=message.text.replace('بحث ',''))
         elif message.text.split()[0] == 'تنزيل':
-            checkLink(chat_id=message.chat.id, message_id=message.id, user_id=message.from_user.id, link=message.text.split()[0])
+            checkLink(chat_id=message.chat.id, message_id=message.id, user_id=message.from_user.id, link=message.text.split()[1])
         else:
             if message.chat.type == 'private':
                 if 'youtube' in message.text.split()[0] or 'youtu' in message.text.split()[0]:
