@@ -269,13 +269,16 @@ def callback_handler(call):
                     downloadMethod(chat_id=call.message.chat.id, user_id=request_interface,
                                         videoID=callbackData[3])
                 elif button == 'cancel':
-                    bot.edit_message_text(text="تم الغاء البحث ❗️", message_id=call.message.message_id, chat_id=call.message.chat.id,)
+                    bot.edit_message_text(text="تم الغاء البحث ❗️", message_id=call.message.message_id, chat_id=call.message.chat.id)
             elif interface == 'DM': #DownloadMethod
-                if button == 'cancel':
+                if button == 'delete':
+                    bot.delete_message(call.message.chat.id, call.message.id)
+                elif button == 'cancel':
                     bot.edit_message_media(chat_id=call.message.chat.id, message_id=call.message.message_id
                         ,media=types.InputMediaPhoto(call.message.photo[0].file_id),
                         reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(
-                        text='🛑 تم الغاء التنزيل', callback_data=f"audio cancel {request_interface}")))
+                        text='🛑 تم الغاء التنزيل', callback_data=f"audio cancel {request_interface}")).add(
+                        types.InlineKeyboardButton(text="⭕️مسح الرسالة", callback_data=f"DM delete {request_interface}")))
                 else:
                     bot.edit_message_media(chat_id=call.message.chat.id, message_id=call.message.message_id
                                             ,media=types.InputMediaPhoto(call.message.photo[0].file_id),
@@ -285,7 +288,7 @@ def callback_handler(call):
                     try:
                         yt = YouTube(f"https://www.youtube.com/watch?v={callbackData[3]}")
                         title = yt.title
-                        channel = yt.author
+                        author = yt.author
                         filename = randomStr(amount=9)
                         yt.streams.filter(only_audio=True).first().download(filename=f"{filename}")
                         with open(f"{filename}.mp4",mode="rb") as f:  
@@ -293,7 +296,8 @@ def callback_handler(call):
                                 Thread(target=make_action, args=(call.message.chat.id, "upload_document", 5)).start()
                                 bot.send_audio(chat_id=call.message.chat.id,audio=f.read(),
                                             caption=f'<a href="tg://user?id={botID}">{botName}🎧</a>', parse_mode="HTML",
-                                            performer=channel,title=title, thumb=requests.get(f"https://api.telegram.org/file/bot{token}/{bot.get_file(call.message.photo[0].file_id).file_path}").content)
+                                            performer=author,title=title, thumb=requests.get(
+                                                f"https://api.telegram.org/file/bot{token}/{bot.get_file(call.message.photo[0].file_id).file_path}").content)
                             elif button == 'V': #Voise
                                 Thread(target=make_action, args=(call.message.chat.id, "upload_video_note", 5)).start()
                                 bot.send_voice(chat_id=call.message.chat.id, voice=f.read(),
@@ -312,7 +316,8 @@ def callback_handler(call):
                         bot.edit_message_media(chat_id=call.message.chat.id, message_id=call.message.message_id
                                         ,media=types.InputMediaPhoto(call.message.photo[0].file_id),
                                         reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(
-                                            text="تم التنزيل ✅",callback_data=f"audio dld {request_interface}")))
+                                            text="تم التنزيل ✅",callback_data=f"audio dld {request_interface}")).add(
+                                        types.InlineKeyboardButton(text="مسح الرسالة ⭕️", callback_data=f"DM delete {request_interface}")))
                                                                         #dld = Downloaded
                     try:
                         os.remove(f"{filename}.mp4")
