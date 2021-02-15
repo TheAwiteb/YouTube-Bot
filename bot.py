@@ -77,7 +77,7 @@ public_help_msg = f"""
 🔘وطريقة التنزيل عبر رابط ⬅️ تنزيل 'الرابط'.
 
     ▫️مثال التنزيل⬅️ تنزيل https://www.youtube.com/watch?v=aMq_W0AYhDk
-    ▫️مثال البحث⬅️ بحث لمياء المالكي
+    ▫️مثال البحث: بحث زينة عماد
 ⁦
 """
 
@@ -85,19 +85,47 @@ def send_message_to_admins(text):
     for id_ in admins:
         bot.send_message(id_,f"📢\n🔴هاذي رسالة موجهة للادمنية فقط🔴\n{text}")
 
-mainChaSubscribMsg = f"""
+mainChaSubscribMsg = lambda user_id, first_name:f"""
+'<a href="tg://user?id={user_id}">{first_name}</a>'
 عليك الاشتراك بقناة البوت الاساسية لتتمكن من استخدامه
 
 - @{bot.get_chat(mainCha).username}
 
 ‼️ اشترك ثم ارسل /start
+⁦
 """
-def mainCha_subscribed(user_id):
+
+def mainCha_subscribed(object_, printMsg:bool):
+    if str(type(object_)) == "<class 'telebot.types.CallbackQuery'>":
+        obType = 'call'
+        message_id = object_.message.id
+        chat_id = object_.message.chat.id
+    else:
+        obType = 'message'
+        chat_id = object_.chat.id
+        message_id = object_.id
+    user_id = object_.from_user.id
     status = bot.get_chat_member(mainCha, user_id).status
     if status == 'creator' or status == 'administrator' or status == 'member':
         return True
     else:
-        return False
+        if printMsg:
+            if obType == 'call' and object_.message.photo != None:
+                bot.edit_message_media(chat_id=chat_id, message_id=message_id,
+                            media=types.InputMediaPhoto(object_.message.photo[0].file_id),
+                            reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text=f'⭕️ يجب الاشتراك بقناة البوت لاستعماله {object_.from_user.first_name}',
+                                                                                url=f"https://telegram.me/{bot.get_chat(mainCha).username}")))
+            else:
+                if obType == 'call':
+                    bot.delete_message(chat_id=chat_id,message_id=message_id)
+                else:
+                    pass
+                bot.send_message(chat_id=chat_id, reply_to_message_id=None if obType == 'call' else message_id,
+                                text=mainChaSubscribMsg(user_id=user_id, first_name=object_.from_user.first_name),parse_mode='HTML',
+                                reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text='𝕔𝕙𝕒.', url=f"https://telegram.me/{bot.get_chat(mainCha).username}")))
+        else:
+            pass
+    return False
 
 def youTubeSearch(user_id, text):
     markup = types.InlineKeyboardMarkup()
@@ -190,10 +218,8 @@ def make_action(chat_id, action, timeout):
 
 @bot.message_handler(commands=['start', 'help'])
 def commands_handler(message):
-    if not mainCha_subscribed(message.from_user.id):
-        bot.send_message(chat_id=message.chat.id, reply_to_message_id=message.id,
-                        text=mainChaSubscribMsg, 
-                        reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text='𝕔𝕙𝕒.', url=f"https://telegram.me/{bot.get_chat(mainCha).username}")))
+    if not mainCha_subscribed(object_=message, printMsg=True):
+        pass
     else:
         if message.chat.type == 'private':
             bot.send_message(chat_id=message.chat.id,
@@ -209,45 +235,46 @@ def commands_handler(message):
                             parse_mode='HTML', disable_web_page_preview=True)
 
 
+@bot.edited_message_handler(func=lambda msg: True ,content_types= ['text'])
 @bot.message_handler(func=lambda msg: True ,content_types= ['text'])
 def message_handler(message):
-    if not mainCha_subscribed(message.from_user.id):
-        bot.send_message(chat_id=message.chat.id, reply_to_message_id=message.id,
-                        text=mainChaSubscribMsg, 
-                        reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text='𝕔𝕙𝕒.', url=f"https://telegram.me/{bot.get_chat(mainCha).username}")))
+    if not mainCha_subscribed(object_=message, printMsg=False) and message.chat.type == 'private':
+        mainCha_subscribed(object_=message, printMsg=True)
     else:
         #الرجاء عدم حذف حقوق مطور السور
-        if message.text.split()[0] in ['سورس','السورس']:
-            bot.send_message(chat_id=message.chat.id, reply_to_message_id=message.id,
-                            text="https://github.com/Awiteb/YouTube-Bot\n\ndev:@AWWWZ  cha:@Awiteb_source ⌨️", parse_mode="HTML")
-        elif message.text.split()[0] == 'بحث':
-            sureSearch(message_id=message.id, chat_id=message.chat.id, user_id=message.from_user.id, textToSearch=message.text.replace('بحث ',''))
-        elif message.text.split()[0] == 'تنزيل':
-            checkLink(chat_id=message.chat.id, message_id=message.id, user_id=message.from_user.id, link=message.text.split()[1])
+        if message.text.split()[0] in ['سورس','السورس']:  #الرجاء عدم حذف حقوق مطور السور
+            if mainCha_subscribed(object_=message, printMsg=True):
+                bot.send_message(chat_id=message.chat.id, reply_to_message_id=message.id,
+                                    text="https://github.com/Awiteb/YouTube-Bot\n\ndev:@AWWWZ  cha:@Awiteb_source ⌨️", parse_mode="HTML") #الرجاء عدم حذف حقوق مطور السور
+            else:
+                pass
+        elif message.text.split()[0] == 'بحث' and len(message.text.split()) != 0:
+            if mainCha_subscribed(object_=message, printMsg=True):
+                sureSearch(message_id=message.id, chat_id=message.chat.id, user_id=message.from_user.id, textToSearch=message.text.replace('بحث ',''))
+            else:
+                pass
+        elif message.text.split()[0] == 'تنزيل' and len(message.text.split()) != 0:
+            if mainCha_subscribed(object_=message, printMsg=True):
+                checkLink(chat_id=message.chat.id, message_id=message.id, user_id=message.from_user.id, link=message.text.split()[1])
+            else:
+                pass
         else:
             if message.chat.type == 'private':
-                if 'youtube' in message.text.split()[0] or 'youtu' in message.text.split()[0]:
-                    checkLink(chat_id=message.chat.id, message_id=message.id, user_id=message.from_user.id, link=message.text.split()[0])
+                if mainCha_subscribed(object_=message, printMsg=True):
+                    if 'youtube' in message.text.split()[0] or 'youtu' in message.text.split()[0]:
+                        checkLink(chat_id=message.chat.id, message_id=message.id, user_id=message.from_user.id, link=message.text.split()[0])
+                    else:
+                        sureSearch(message_id=message.id, chat_id=message.chat.id, user_id=message.from_user.id, textToSearch=message.text)
                 else:
-                    sureSearch(message_id=message.id, chat_id=message.chat.id, user_id=message.from_user.id, textToSearch=message.text)
+                    pass
             else:
                 pass
 
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_handler(call):
-    if not mainCha_subscribed(call.from_user.id):
-        if call.message.photo == None:
-            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id,
-                            text=mainChaSubscribMsg, 
-                            reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text='𝕔𝕙𝕒.',
-                                                                            url=f"https://telegram.me/{bot.get_chat(mainCha).username}")))
-        else:
-            bot.edit_message_media(chat_id=call.message.chat.id, message_id=call.message.message_id
-                        ,media=types.InputMediaPhoto(call.message.photo[0].file_id),
-                        reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text='⭕️ الرجاء الاشتراك بقناة البوت',
-                                                                            url=f"https://telegram.me/{bot.get_chat(mainCha).username}")))
-
+    if not mainCha_subscribed(object_=call, printMsg=True):
+        pass
     else:
         callbackData = str(call.data).split()
         print(f"call back ->{callbackData}\nLen ->{len(call.data)}")
