@@ -11,6 +11,7 @@ import telebot
 from telebot import types
 from json import loads
 from pytube import YouTube
+from telebot.apihelper import edit_message_reply_markup
 from youtubesearchpython import VideosSearch, Video
 
 # get bot data from json file #
@@ -256,7 +257,8 @@ def commands_handler(message):
                 timeName = 'ثواني'
             else:
                 timeName = 'ثانية'
-            bot.reply_to(message, text=f"سرعة البوت {typeSpeed}\nالسرعة: {speed} {timeName}\n⁦")
+            bot.reply_to(message, text=f"سرعة البوت {typeSpeed}\nالسرعة: {speed} {timeName}\n⁦", reply_markup=
+                        types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text='𝕔𝕙𝕒.', url=f"https://telegram.me/{bot.get_chat(mainCha).username}")))
 
 @bot.edited_message_handler(func=lambda msg: True ,content_types= ['text'])
 @bot.message_handler(func=lambda msg: True ,content_types= ['text'])
