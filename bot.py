@@ -2,6 +2,7 @@
 
 import os, sys
 from time import sleep
+from datetime import datetime
 import requests
 from random import choice
 from string import ascii_lowercase
@@ -216,60 +217,72 @@ def make_action(chat_id, action, timeout):
     #record_video_note for video note recording
     bot.send_chat_action(chat_id=chat_id, action=action, timeout=timeout)
 
-@bot.message_handler(commands=['start', 'help'])
+@bot.message_handler(func=lambda msg: True ,content_types= ['text'])
 def commands_handler(message):
     if not mainCha_subscribed(object_=message, printMsg=True):
         pass
     else:
-        if message.chat.type == 'private':
-            bot.send_message(chat_id=message.chat.id,
-                            text=private_help_msg,
-                            reply_to_message_id= message.id,
-                            reply_markup=dev_addBot(),
-                            parse_mode='HTML')
-        else:
-            bot.send_message(chat_id=message.chat.id,
-                            text=public_help_msg,
-                            reply_to_message_id= message.id,
-                            reply_markup=dev_addBot(),
-                            parse_mode='HTML', disable_web_page_preview=True)
-
+        if message.text.lower() in ['/start','/help']:
+            if message.chat.type == 'private':
+                bot.send_message(chat_id=message.chat.id,
+                                text=private_help_msg,
+                                reply_to_message_id= message.id,
+                                reply_markup=dev_addBot(),
+                                parse_mode='HTML')
+            else:
+                bot.send_message(chat_id=message.chat.id,
+                                text=public_help_msg,
+                                reply_to_message_id= message.id,
+                                reply_markup=dev_addBot(),
+                                parse_mode='HTML', disable_web_page_preview=True)
+        elif message.text.lower() == '/ping' or message.text == 'سرعة البوت':
+            speed = int(datetime.now().timestamp() - datetime.fromtimestamp(message.date).timestamp())
+            if speed < 3:
+                typeSpeed = "رائعة 👌🏼"
+            elif speed <= 8:
+                typeSpeed = "جيدة  🙁"
+            else:
+                typeSpeed = "سيئة 👎🏼"
+            if speed == 0:
+                speed = 'صفر'
+                timeName = ''
+            elif speed == 1:
+                speed = 'ثانية'
+                timeName = ''
+            elif speed == 2:
+                speed = "ثانيتين"
+                timeName = ''
+            elif speed <= 10:
+                timeName = 'ثواني'
+            else:
+                timeName = 'ثانية'
+            bot.reply_to(message, text=f"سرعة البوت {typeSpeed}\nالسرعة: {speed} {timeName}\n⁦")
 
 @bot.edited_message_handler(func=lambda msg: True ,content_types= ['text'])
 @bot.message_handler(func=lambda msg: True ,content_types= ['text'])
 def message_handler(message):
     if not mainCha_subscribed(object_=message, printMsg=False) and message.chat.type == 'private':
-        mainCha_subscribed(object_=message, printMsg=True)
-    else:
+        mainCha_subscribed(object_=message, printMsg=True) #اذ لم يكن مشترك وفي الخاص ارسله
+    else: # اذا كان مشترك او لم يكن بالخاص
+        
         #الرجاء عدم حذف حقوق مطور السور
-        if message.text.split()[0] in ['سورس','السورس']:  #الرجاء عدم حذف حقوق مطور السور
-            if mainCha_subscribed(object_=message, printMsg=True):
-                bot.send_message(chat_id=message.chat.id, reply_to_message_id=message.id,
-                                    text="https://github.com/Awiteb/YouTube-Bot\n\ndev:@AWWWZ  cha:@Awiteb_source ⌨️", parse_mode="HTML") #الرجاء عدم حذف حقوق مطور السور
-            else:
-                pass
-        elif message.text.split()[0] == 'بحث' and len(message.text.split()) != 0:
-            if mainCha_subscribed(object_=message, printMsg=True):
-                sureSearch(message_id=message.id, chat_id=message.chat.id, user_id=message.from_user.id, textToSearch=message.text.replace('بحث ',''))
-            else:
-                pass
-        elif message.text.split()[0] == 'تنزيل' and len(message.text.split()) != 0:
-            if mainCha_subscribed(object_=message, printMsg=True):
-                checkLink(chat_id=message.chat.id, message_id=message.id, user_id=message.from_user.id, link=message.text.split()[1])
-            else:
-                pass
+        if message.text.split()[0] in ['سورس','السورس'] and mainCha_subscribed(object_=message, printMsg=True):  #الرجاء عدم حذف حقوق مطور السور
+            bot.send_message(chat_id=message.chat.id, reply_to_message_id=message.id,
+                                text="https://github.com/Awiteb/YouTube-Bot\n\ndev:@AWWWZ  cha:@Awiteb_source ⌨️", parse_mode="HTML") #الرجاء عدم حذف حقوق مطور السور
+        
+        elif message.text.split()[0] == 'بحث' and mainCha_subscribed(object_=message, printMsg=True) and len(message.text.split()) != 1:
+            sureSearch(message_id=message.id, chat_id=message.chat.id, user_id=message.from_user.id, textToSearch=message.text.replace('بحث ',''))
+        
+        elif message.text.split()[0] == 'تنزيل' and mainCha_subscribed(object_=message, printMsg=True) and len(message.text.split()) != 1:
+            checkLink(chat_id=message.chat.id, message_id=message.id, user_id=message.from_user.id, link=message.text.split()[1])
         else:
             if message.chat.type == 'private':
-                if mainCha_subscribed(object_=message, printMsg=True):
-                    if 'youtube' in message.text.split()[0] or 'youtu' in message.text.split()[0]:
-                        checkLink(chat_id=message.chat.id, message_id=message.id, user_id=message.from_user.id, link=message.text.split()[0])
-                    else:
-                        sureSearch(message_id=message.id, chat_id=message.chat.id, user_id=message.from_user.id, textToSearch=message.text)
+                if 'youtube' in message.text.lower().split()[0] or 'youtu' in message.text.lower().split()[0]:
+                    checkLink(chat_id=message.chat.id, message_id=message.id, user_id=message.from_user.id, link=message.text.split()[0])
                 else:
-                    pass
+                    sureSearch(message_id=message.id, chat_id=message.chat.id, user_id=message.from_user.id, textToSearch=message.text)
             else:
                 pass
-
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_handler(call):
