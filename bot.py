@@ -34,6 +34,7 @@ while True:
             dev_id = int(input("Enter dev id: "))
             token = input("Enter bot token: ")
             amount = int(input("How many admin you want add: "))
+            mainCha = int(input("Enter cha id: "))
             admins = []
             admins.append(dev_id)
             for i in range(amount):
@@ -159,14 +160,6 @@ def youTubeListSearch(user_id, text):
         callback_data= f"YS cancel {user_id}"))
     return markup
 
-def divide(number, amount):
-    res = []
-    res.append(number)
-    for i in range(amount):
-        number //=2
-        res.append(number)
-    return res
-
 def checkVidLink(message, link):
     chat_id= message.chat.id
     user_id=message.from_user.id
@@ -231,20 +224,23 @@ def sendVid(call, vid_id, method, is_list):
                 vidStute = 'خاص'
             elif 'unavailable' in str(e):
                 vidStute = 'محذوف'
+            elif '413' in str(e):
+                vidStute = 'تجاوز حجمه ال 50 MG'
             else:
+                print(str(e))
                 vidStute = 'لايمكن تنزيله'
             bot.send_message(chat_id=call.message.chat.id, reply_to_message_id=call.message.id,
                                 text=f"🔺 يوجد فيديو {vidStute} في هذه القائمة")
         else:
-            if str(e) == "A request to the Telegram API was unsuccessful. Error code: 413. Description: Request Entity Too Large":
+            if '413' in str(e):
                 downloadErrorMsg = "عذرا لقد تجاوز حجم الملف 50 MG❗️"
             else:
                 downloadErrorMsg = 'مشكلة بالتنزيل 🛑'
-                bot.edit_message_media(chat_id=call.message.chat.id, message_id=call.message.id,
-                                        media=types.InputMediaPhoto(call.message.photo[0].file_id),
-                                            reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(
-                                                text=downloadErrorMsg, callback_data=f'answer dl-problem {call.from_user.id}')))
-                                                                                    #dl-problem = Download problem 
+            bot.edit_message_media(chat_id=call.message.chat.id, message_id=call.message.id,
+                                    media=types.InputMediaPhoto(call.message.photo[0].file_id),
+                                        reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(
+                                            text=downloadErrorMsg, callback_data=f'answer dl-problem {call.from_user.id}',url="https://www.youtube.com/watch?v="+vid_id)))
+                                                                                #dl-problem = Download problem 
     try:
         os.remove(f"{filename}.mp4")
     except:
@@ -328,6 +324,14 @@ def dev_cha():
 def randomStr(length):
     return ''.join(choice(ascii_lowercase) for i in range(length))
 
+def divide(number, amount):
+    res = []
+    res.append(number)
+    for i in range(amount):
+        number //=2
+        res.append(number)
+    return res
+
 def make_action(chat_id, action, timeout):
     #typing for text messages
     #upload_photo for photos
@@ -395,7 +399,6 @@ def commands_handler(message):
 @bot.edited_message_handler(func=lambda msg: True ,content_types= ['text'])
 @bot.message_handler(func=lambda msg: True ,content_types= ['text'])
 def message_handler(message):
-    print(message)
     user_id = message.from_user.id
     msg_txt = message.text
     chat_id = message.chat.id
@@ -419,7 +422,7 @@ def message_handler(message):
                         if chat_private:
                             checkListLink(object_=message, link=msg_txt.split()[1])
                         else:
-                            if user_id in [id.user.id for id in bot.get_chat_administrators(message.chat_id)] or user_id in admins:
+                            if user_id in [id.user.id for id in bot.get_chat_administrators(chat_id)] or user_id in admins:
                                     checkListLink(object_=message, link=msg_txt.split()[1])
                             else:
                                 bot.send_message(chat_id=chat_id, reply_to_message_id=message.id,
