@@ -227,7 +227,6 @@ def sendVid(call, vid_id, method, is_list):
             elif '413' in str(e):
                 vidStute = 'تجاوز حجمه ال 50 MG'
             else:
-                print(str(e))
                 vidStute = 'لايمكن تنزيله'
             bot.send_message(chat_id=call.message.chat.id, reply_to_message_id=call.message.id,
                                 text=f"🔺 يوجد فيديو {vidStute} في هذه القائمة")
@@ -462,7 +461,6 @@ def callback_handler(call):
             pass
         else:
             callbackData = str(call.data).split()
-            print(f"call back ->{callbackData}\nLen ->{len(call.data)}")
             request_interface = int(callbackData[2])
             button = callbackData[1]
             interface = callbackData[0]
